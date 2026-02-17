@@ -36,6 +36,33 @@
           "origin": "https://replit.com/"
         }
       ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "17.0"
+          }
+        }
+      ],
+      [
+        "voltra",
+        {
+          "groupIdentifier": "group.com.steadydad.shared",
+          "deploymentTarget": "17.0",
+          "widgets": [
+            {
+              "id": "dashboard_snapshot",
+              "displayName": "SteadyDad Snapshot",
+              "description": "Feed, diaper, and sleep status at a glance",
+              "supportedFamilies": [
+                "systemSmall",
+                "systemMedium",
+                "systemLarge"
+              ]
+            }
+          ]
+        }
+      ],
       "expo-font",
       "expo-web-browser"
     ],

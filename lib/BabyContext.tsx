@@ -1,7 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode, useRef } from 'react';
 import { BabyProfile, BabyEvent, Milestone } from './types';
 import * as Storage from './storage';
 import { guidanceSeed } from './guidance-seed';
+import { buildDashboardSnapshot, getDashboardSnapshotSyncKey } from './dashboardSnapshot';
+import { clearIOSGlanceables, syncIOSGlanceables } from './voltra/sync';
 
 interface BabyContextValue {
   profile: BabyProfile | null;
@@ -29,10 +31,47 @@ export function BabyProvider({ children }: { children: ReactNode }) {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [onboardingDone, setOnboardingDone] = useState(false);
+  const lastSyncedSnapshotKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  useEffect(() => {
+    if (isLoading) return;
+    let cancelled = false;
+
+    const syncGlanceables = async () => {
+      if (!onboardingDone || !profile) {
+        if (lastSyncedSnapshotKeyRef.current === null) return;
+        await clearIOSGlanceables();
+        if (!cancelled) {
+          lastSyncedSnapshotKeyRef.current = null;
+        }
+        return;
+      }
+
+      const snapshot = buildDashboardSnapshot(profile, events);
+      const snapshotSyncKey = getDashboardSnapshotSyncKey(snapshot);
+
+      if (snapshotSyncKey === lastSyncedSnapshotKeyRef.current) {
+        return;
+      }
+
+      await syncIOSGlanceables(snapshot);
+      if (!cancelled) {
+        lastSyncedSnapshotKeyRef.current = snapshotSyncKey;
+      }
+    };
+
+    syncGlanceables().catch((err) => {
+      console.error('Failed to sync iOS glanceables:', err);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile, events, isLoading, onboardingDone]);
 
   const loadInitialData = async () => {
     try {
@@ -111,6 +150,8 @@ export function BabyProvider({ children }: { children: ReactNode }) {
 
   const resetAll = useCallback(async () => {
     await Storage.resetAllData();
+    lastSyncedSnapshotKeyRef.current = null;
+    await clearIOSGlanceables();
     setProfile(null);
     setEvents([]);
     setMilestones([]);
