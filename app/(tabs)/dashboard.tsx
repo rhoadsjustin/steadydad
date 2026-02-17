@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, Modal, Platform, Alert,
+  View, Text, StyleSheet, ScrollView, Pressable, Modal, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -8,13 +8,14 @@ import { router, Redirect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useBaby } from '@/lib/BabyContext';
+import { buildDashboardSnapshot } from '@/lib/dashboardSnapshot';
 import { getBabyAge, getRelativeTime, getSleepDuration } from '@/lib/helpers';
 
 type ModalType = 'feed' | 'diaper' | 'mood' | null;
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
-  const { profile, events, isLoading, onboardingDone, logEvent, getLastEventByType, getLastSleepEvent } = useBaby();
+  const { profile, events, isLoading, onboardingDone, logEvent } = useBaby();
   const [activeModal, setActiveModal] = useState<ModalType>(null);
 
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
@@ -31,10 +32,8 @@ export default function DashboardScreen() {
     return <Redirect href="/onboarding/welcome" />;
   }
 
-  const lastFeed = getLastEventByType('feed');
-  const lastDiaper = getLastEventByType('diaper');
-  const lastSleep = getLastSleepEvent();
-  const isSleeping = lastSleep?.type === 'sleep_start';
+  const snapshot = buildDashboardSnapshot(profile, events);
+  const { isSleeping, lastFeedAt, lastDiaperAt, lastSleepAt, sleepStartedAt, sleepStatus } = snapshot;
 
   const handleQuickAction = (type: ModalType | 'sleep') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -81,7 +80,7 @@ export default function DashboardScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Hello, Dad</Text>
-            <Text style={styles.babyName}>{profile.name}</Text>
+            <Text style={styles.babyName}>{snapshot.babyName}</Text>
             <Text style={styles.babyAge}>{getBabyAge(profile.birthDate)}</Text>
           </View>
           <Pressable
@@ -97,14 +96,14 @@ export default function DashboardScreen() {
             icon="baby-bottle"
             iconFamily="material-community"
             label="Last Feed"
-            value={lastFeed ? getRelativeTime(lastFeed.timestamp) : 'No feeds yet'}
+            value={lastFeedAt ? getRelativeTime(lastFeedAt) : 'No feeds yet'}
             color={Colors.feed}
           />
           <StatusCard
             icon="water-outline"
             iconFamily="ionicons"
             label="Last Diaper"
-            value={lastDiaper ? getRelativeTime(lastDiaper.timestamp) : 'No diapers yet'}
+            value={lastDiaperAt ? getRelativeTime(lastDiaperAt) : 'No diapers yet'}
             color={Colors.diaper}
           />
         </View>
@@ -121,10 +120,10 @@ export default function DashboardScreen() {
             <View style={styles.sleepInfo}>
               <Text style={styles.sleepLabel}>Sleep Status</Text>
               <Text style={styles.sleepValue}>
-                {isSleeping && lastSleep
-                  ? `Sleeping for ${getSleepDuration(lastSleep.timestamp)}`
-                  : lastSleep
-                    ? `Awake \u00B7 Last sleep ${getRelativeTime(lastSleep.timestamp)}`
+                {sleepStatus === 'sleeping' && sleepStartedAt
+                  ? `Sleeping for ${getSleepDuration(sleepStartedAt)}`
+                  : sleepStatus === 'awake' && lastSleepAt
+                    ? `Awake \u00B7 Last sleep ${getRelativeTime(lastSleepAt)}`
                     : 'No sleep logged yet'}
               </Text>
             </View>

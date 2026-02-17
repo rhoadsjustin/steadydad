@@ -6,15 +6,17 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useBaby } from '@/lib/BabyContext';
+import { buildDashboardSnapshot } from '@/lib/dashboardSnapshot';
 import { exportAllData } from '@/lib/storage';
+import { clearIOSGlanceables, isIOSGlanceablesEnabled, syncIOSGlanceables } from '@/lib/voltra';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { profile, updateProfile, resetAll } = useBaby();
+  const { profile, events, onboardingDone, updateProfile, resetAll } = useBaby();
   const [editName, setEditName] = useState(profile?.name || '');
   const [editBirthDate, setEditBirthDate] = useState(profile?.birthDate || '');
   const [showEdit, setShowEdit] = useState(false);
@@ -62,6 +64,33 @@ export default function SettingsScreen() {
     setShowResetConfirm(false);
   };
 
+  const handleSyncGlanceables = async () => {
+    if (Platform.OS !== 'ios') return;
+
+    if (!isIOSGlanceablesEnabled()) {
+      Alert.alert('iOS Glanceables Disabled', 'Set EXPO_PUBLIC_ENABLE_IOS_GLANCEABLES=true to enable sync.');
+      return;
+    }
+
+    try {
+      if (!onboardingDone || !profile) {
+        await clearIOSGlanceables();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert('Cleared', 'Live Activity and widget were cleared.');
+        return;
+      }
+
+      const snapshot = buildDashboardSnapshot(profile, events);
+      await syncIOSGlanceables(snapshot);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert('Synced', 'Live Activity and widget were updated from current dashboard data.');
+    } catch (err) {
+      console.error('Failed to sync glanceables:', err);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Sync Failed', 'Could not update iOS glanceables. Check Metro/native logs for details.');
+    }
+  };
+
   return (
     <View style={[styles.container, { paddingTop: insets.top + webTopInset }]}>
       <Text style={styles.screenTitle}>Settings</Text>
@@ -102,6 +131,14 @@ export default function SettingsScreen() {
             subtitle="Save all data as a JSON file"
             onPress={handleExport}
           />
+          {Platform.OS === 'ios' && (
+            <SettingsRow
+              icon="sync-outline"
+              label="Sync iOS Glanceables"
+              subtitle="Refresh Live Activity and widget now"
+              onPress={handleSyncGlanceables}
+            />
+          )}
           <SettingsRow
             icon="trash-outline"
             label="Reset All Data"
@@ -133,7 +170,7 @@ export default function SettingsScreen() {
             <Pressable style={styles.modalSheet} onPress={() => {}}>
               <View style={styles.modalHandle} />
               <Text style={styles.modalTitle}>Edit Profile</Text>
-              <Text style={styles.inputLabel}>Baby's Name</Text>
+              <Text style={styles.inputLabel}>Baby&apos;s Name</Text>
               <TextInput
                 style={styles.input}
                 value={editName}
