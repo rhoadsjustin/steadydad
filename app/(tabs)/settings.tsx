@@ -8,14 +8,17 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Haptics from 'expo-haptics';
-import Colors from '@/constants/colors';
+import type { AppThemeColors } from '@/constants/colors';
 import { useBaby } from '@/lib/BabyContext';
 import { buildDashboardSnapshot } from '@/lib/dashboardSnapshot';
 import { exportAllData } from '@/lib/storage';
 import { clearIOSGlanceables, isIOSGlanceablesEnabled, syncIOSGlanceables } from '@/lib/voltra';
+import { useAppTheme } from '@/lib/use-app-theme';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const { profile, events, onboardingDone, updateProfile, resetAll } = useBaby();
   const [editName, setEditName] = useState(profile?.name || '');
   const [editBirthDate, setEditBirthDate] = useState(profile?.birthDate || '');
@@ -103,7 +106,7 @@ export default function SettingsScreen() {
           <View style={styles.profileCard}>
             <View style={styles.profileInfo}>
               <View style={styles.profileAvatar}>
-                <Ionicons name="person" size={24} color={Colors.primary} />
+                <Ionicons name="person" size={24} color={colors.primary} />
               </View>
               <View>
                 <Text style={styles.profileName}>{profile?.name || 'Baby'}</Text>
@@ -118,7 +121,7 @@ export default function SettingsScreen() {
               }}
               style={({ pressed }) => [styles.editButton, pressed && { opacity: 0.7 }]}
             >
-              <Ionicons name="create-outline" size={20} color={Colors.primary} />
+              <Ionicons name="create-outline" size={20} color={colors.primary} />
             </Pressable>
           </View>
         </View>
@@ -130,6 +133,8 @@ export default function SettingsScreen() {
             label="Export Data"
             subtitle="Save all data as a JSON file"
             onPress={handleExport}
+            colors={colors}
+            styles={styles}
           />
           {Platform.OS === 'ios' && (
             <SettingsRow
@@ -137,6 +142,8 @@ export default function SettingsScreen() {
               label="Sync iOS Glanceables"
               subtitle="Refresh Live Activity and widget now"
               onPress={handleSyncGlanceables}
+              colors={colors}
+              styles={styles}
             />
           )}
           <SettingsRow
@@ -145,6 +152,8 @@ export default function SettingsScreen() {
             subtitle="Delete everything and start over"
             onPress={() => setShowResetConfirm(true)}
             danger
+            colors={colors}
+            styles={styles}
           />
         </View>
 
@@ -176,7 +185,7 @@ export default function SettingsScreen() {
                 value={editName}
                 onChangeText={setEditName}
                 placeholder="Enter name"
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={colors.textTertiary}
               />
               <Text style={styles.inputLabel}>Birth Date (YYYY-MM-DD)</Text>
               <TextInput
@@ -184,7 +193,7 @@ export default function SettingsScreen() {
                 value={editBirthDate}
                 onChangeText={setEditBirthDate}
                 placeholder="2025-01-15"
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={colors.textTertiary}
                 keyboardType="numbers-and-punctuation"
               />
               <Pressable
@@ -201,7 +210,7 @@ export default function SettingsScreen() {
       <Modal visible={showResetConfirm} transparent animationType="fade" onRequestClose={() => setShowResetConfirm(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setShowResetConfirm(false)}>
           <View style={styles.confirmDialog}>
-            <Ionicons name="warning-outline" size={40} color={Colors.danger} />
+            <Ionicons name="warning-outline" size={40} color={colors.danger} />
             <Text style={styles.confirmTitle}>Reset All Data?</Text>
             <Text style={styles.confirmMessage}>
               This will permanently delete all your data including events, milestones, and baby profile. This cannot be undone.
@@ -227,35 +236,49 @@ export default function SettingsScreen() {
   );
 }
 
-function SettingsRow({ icon, label, subtitle, onPress, danger }: {
-  icon: string; label: string; subtitle: string; onPress: () => void; danger?: boolean;
+function SettingsRow({
+  icon,
+  label,
+  subtitle,
+  onPress,
+  danger,
+  colors,
+  styles,
+}: {
+  icon: string;
+  label: string;
+  subtitle: string;
+  onPress: () => void;
+  danger?: boolean;
+  colors: AppThemeColors;
+  styles: ReturnType<typeof createStyles>;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.settingsRow, pressed && { backgroundColor: Colors.surfaceSecondary }]}
+      style={({ pressed }) => [styles.settingsRow, pressed && { backgroundColor: colors.surfaceSecondary }]}
     >
-      <View style={[styles.settingsRowIcon, danger && { backgroundColor: Colors.danger + '15' }]}>
-        <Ionicons name={icon as any} size={20} color={danger ? Colors.danger : Colors.primary} />
+      <View style={[styles.settingsRowIcon, danger && { backgroundColor: colors.danger + '15' }]}>
+        <Ionicons name={icon as any} size={20} color={danger ? colors.danger : colors.primary} />
       </View>
       <View style={styles.settingsRowContent}>
-        <Text style={[styles.settingsRowLabel, danger && { color: Colors.danger }]}>{label}</Text>
+        <Text style={[styles.settingsRowLabel, danger && { color: colors.danger }]}>{label}</Text>
         <Text style={styles.settingsRowSubtitle}>{subtitle}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} />
+      <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   screenTitle: {
     fontFamily: 'Nunito_800ExtraBold',
     fontSize: 28,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 16,
     marginTop: 16,
     paddingHorizontal: 20,
@@ -267,19 +290,19 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 10,
   },
   profileCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
     shadowRadius: 4,
@@ -294,33 +317,33 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
     justifyContent: 'center',
     alignItems: 'center',
   },
   profileName: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 18,
-    color: Colors.text,
+    color: colors.text,
   },
   profileDate: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   editButton: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: Colors.primary + '10',
+    backgroundColor: colors.primary + '10',
     justifyContent: 'center',
     alignItems: 'center',
   },
   settingsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 8,
@@ -329,7 +352,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
@@ -340,16 +363,16 @@ const styles = StyleSheet.create({
   settingsRowLabel: {
     fontFamily: 'Nunito_600SemiBold',
     fontSize: 16,
-    color: Colors.text,
+    color: colors.text,
   },
   settingsRowSubtitle: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   aboutCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
@@ -357,28 +380,28 @@ const styles = StyleSheet.create({
   aboutAppName: {
     fontFamily: 'Nunito_800ExtraBold',
     fontSize: 22,
-    color: Colors.primary,
+    color: colors.primary,
   },
   aboutVersion: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 4,
   },
   aboutDescription: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 8,
     textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: Colors.overlay,
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -389,33 +412,33 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: colors.borderLight,
     alignSelf: 'center',
     marginBottom: 20,
   },
   modalTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 20,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 20,
   },
   inputLabel: {
     fontFamily: 'Nunito_600SemiBold',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 6,
   },
   input: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: colors.surfaceSecondary,
     borderRadius: 14,
     padding: 16,
     fontFamily: 'Nunito_500Medium',
     fontSize: 16,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 16,
   },
   saveButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
@@ -424,10 +447,10 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 16,
-    color: Colors.white,
+    color: colors.white,
   },
   confirmDialog: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 28,
     marginHorizontal: 30,
@@ -439,14 +462,14 @@ const styles = StyleSheet.create({
   confirmTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 20,
-    color: Colors.text,
+    color: colors.text,
     marginTop: 16,
     marginBottom: 8,
   },
   confirmMessage: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
@@ -463,19 +486,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   confirmCancel: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: colors.surfaceSecondary,
   },
   confirmCancelText: {
     fontFamily: 'Nunito_600SemiBold',
     fontSize: 15,
-    color: Colors.text,
+    color: colors.text,
   },
   confirmDelete: {
-    backgroundColor: Colors.danger,
+    backgroundColor: colors.danger,
   },
   confirmDeleteText: {
     fontFamily: 'Nunito_600SemiBold',
     fontSize: 15,
-    color: Colors.white,
+    color: colors.white,
   },
 });

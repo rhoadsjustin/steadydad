@@ -4,8 +4,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import Colors from '@/constants/colors';
+import type { AppThemeColors } from '@/constants/colors';
 import { saveDadGoals } from '@/lib/storage';
+import { useAppTheme } from '@/lib/use-app-theme';
 
 const GOALS = [
   { id: 'track', label: 'Track feeds, diapers & sleep', icon: 'analytics-outline' },
@@ -18,6 +19,8 @@ const GOALS = [
 
 export default function DadGoalsScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const [selected, setSelected] = useState<string[]>([]);
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
   const webBottomInset = Platform.OS === 'web' ? 34 : 0;
@@ -41,7 +44,7 @@ export default function DadGoalsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </Pressable>
 
         <View style={styles.stepIndicator}>
@@ -51,7 +54,7 @@ export default function DadGoalsScreen() {
         </View>
 
         <Text style={styles.title}>What matters to you?</Text>
-        <Text style={styles.subtitle}>Select what you'd like help with (optional)</Text>
+        <Text style={styles.subtitle}>Select what you&apos;d like help with (optional)</Text>
 
         <View style={styles.goals}>
           {GOALS.map((goal) => {
@@ -66,14 +69,14 @@ export default function DadGoalsScreen() {
                   <Ionicons
                     name={goal.icon as any}
                     size={24}
-                    color={isSelected ? Colors.primary : Colors.textSecondary}
+                    color={isSelected ? colors.primary : colors.textSecondary}
                   />
                 </View>
                 <Text style={[styles.goalLabel, isSelected && styles.goalLabelSelected]}>
                   {goal.label}
                 </Text>
                 {isSelected && (
-                  <Ionicons name="checkmark-circle" size={22} color={Colors.primary} />
+                  <Ionicons name="checkmark-circle" size={22} color={colors.primary} />
                 )}
               </Pressable>
             );
@@ -89,17 +92,17 @@ export default function DadGoalsScreen() {
           <Text style={styles.nextButtonText}>
             {selected.length > 0 ? 'Continue' : 'Skip'}
           </Text>
-          <Ionicons name="arrow-forward" size={20} color={Colors.white} />
+          <Ionicons name="arrow-forward" size={20} color={colors.white} />
         </Pressable>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     paddingHorizontal: 30,
@@ -121,22 +124,22 @@ const styles = StyleSheet.create({
     height: 4,
     flex: 1,
     borderRadius: 2,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
   },
   stepDotActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   title: {
     fontFamily: 'Nunito_800ExtraBold',
     fontSize: 28,
-    color: Colors.text,
+    color: colors.text,
     letterSpacing: -0.5,
     marginBottom: 8,
   },
   subtitle: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 28,
   },
   goals: {
@@ -145,47 +148,47 @@ const styles = StyleSheet.create({
   goalCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 2,
     borderColor: 'transparent',
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
     shadowRadius: 3,
     elevation: 1,
   },
   goalCardSelected: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '08',
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '08',
   },
   goalIcon: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: colors.surfaceSecondary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
   },
   goalIconSelected: {
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
   },
   goalLabel: {
     fontFamily: 'Nunito_600SemiBold',
     fontSize: 15,
-    color: Colors.text,
+    color: colors.text,
     flex: 1,
   },
   goalLabelSelected: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   bottomArea: {
     paddingHorizontal: 30,
   },
   nextButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 16,
     paddingVertical: 18,
     flexDirection: 'row',
@@ -196,6 +199,6 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 18,
-    color: Colors.white,
+    color: colors.white,
   },
 });

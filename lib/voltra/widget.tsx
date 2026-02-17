@@ -1,4 +1,5 @@
-import Colors from '@/constants/colors';
+import { Appearance, type ColorSchemeName } from 'react-native';
+import { getThemeColors, type AppThemeColors } from '@/constants/colors';
 import { DashboardSnapshot } from '@/lib/dashboardSnapshot';
 import { getRelativeTime, getSleepDuration } from '@/lib/helpers';
 import { Voltra } from 'voltra';
@@ -11,7 +12,9 @@ import {
 } from 'voltra/client';
 import { VOLTRA_DEEP_LINKS, VOLTRA_WIDGET_IDS } from './ids';
 
-type DashboardWidgetUpdateOptions = Omit<UpdateWidgetOptions, 'deepLinkUrl'>;
+type DashboardWidgetUpdateOptions = Omit<UpdateWidgetOptions, 'deepLinkUrl'> & {
+  colorScheme?: ColorSchemeName;
+};
 type SleepPresentation = {
   title: string;
   detail: string;
@@ -28,16 +31,14 @@ type Tone = {
   valueColor: string;
 };
 
-const FEED_TONE: Tone = {
-  backgroundColor: '#EAF2FD',
-  iconColor: Colors.feed,
-  valueColor: Colors.textSecondary,
-};
-
-const DIAPER_TONE: Tone = {
-  backgroundColor: '#F1EAF9',
-  iconColor: Colors.diaper,
-  valueColor: Colors.textSecondary,
+type WidgetTheme = {
+  colors: AppThemeColors;
+  isDark: boolean;
+  feedTone: Tone;
+  diaperTone: Tone;
+  idleNowTone: Tone;
+  primaryHeading: string;
+  badgeBackground: string;
 };
 
 function getRelativeLabel(timestamp: number | null, fallback: string): string {
@@ -59,7 +60,34 @@ function getCompactRelativeLabel(timestamp: number | null, fallback: string): st
   return `${days}d`;
 }
 
-function getSleepPresentation(snapshot: DashboardSnapshot): SleepPresentation {
+function resolveWidgetTheme(colorScheme: ColorSchemeName = Appearance.getColorScheme()): WidgetTheme {
+  const colors = getThemeColors(colorScheme);
+  const isDark = colorScheme === 'dark';
+
+  return {
+    colors,
+    isDark,
+    feedTone: {
+      backgroundColor: isDark ? '#233A58' : '#EAF2FD',
+      iconColor: colors.feed,
+      valueColor: colors.textSecondary,
+    },
+    diaperTone: {
+      backgroundColor: isDark ? '#30254A' : '#F1EAF9',
+      iconColor: colors.diaper,
+      valueColor: colors.textSecondary,
+    },
+    idleNowTone: {
+      backgroundColor: isDark ? '#273E5D' : '#EAF0FB',
+      iconColor: colors.primaryLight,
+      valueColor: isDark ? colors.primaryLight : colors.primaryDark,
+    },
+    primaryHeading: isDark ? colors.text : colors.primaryDark,
+    badgeBackground: isDark ? '#233A58' : '#E9EFFA',
+  };
+}
+
+function getSleepPresentation(snapshot: DashboardSnapshot, theme: WidgetTheme): SleepPresentation {
   if (snapshot.sleepStartedAt) {
     const duration = getSleepDuration(snapshot.sleepStartedAt);
 
@@ -69,8 +97,8 @@ function getSleepPresentation(snapshot: DashboardSnapshot): SleepPresentation {
       compactValue: 'Asleep',
       durationValue: duration,
       icon: 'moon.stars.fill',
-      iconColor: '#21A789',
-      backgroundColor: '#E7F4EE',
+      iconColor: theme.isDark ? '#4CD1A8' : '#21A789',
+      backgroundColor: theme.isDark ? '#1F4139' : '#E7F4EE',
     };
   }
 
@@ -83,8 +111,8 @@ function getSleepPresentation(snapshot: DashboardSnapshot): SleepPresentation {
       compactValue: 'Awake',
       durationValue: getCompactRelativeLabel(snapshot.lastSleepAt, '--'),
       icon: 'sun.max.fill',
-      iconColor: Colors.accent,
-      backgroundColor: '#FEF1E4',
+      iconColor: theme.colors.accent,
+      backgroundColor: theme.isDark ? '#47351F' : '#FEF1E4',
     };
   }
 
@@ -94,8 +122,8 @@ function getSleepPresentation(snapshot: DashboardSnapshot): SleepPresentation {
     compactValue: '--',
     durationValue: '--',
     icon: 'moon.zzz.fill',
-    iconColor: Colors.textSecondary,
-    backgroundColor: '#EBEFF5',
+    iconColor: theme.colors.textSecondary,
+    backgroundColor: theme.isDark ? '#273448' : '#EBEFF5',
   };
 }
 
@@ -104,6 +132,7 @@ function renderRoundMetric(
   value: string,
   icon: string,
   tone: Tone,
+  theme: WidgetTheme,
 ) {
   return (
     <Voltra.VStack style={{ flex: 1, alignItems: 'center' }}>
@@ -123,7 +152,7 @@ function renderRoundMetric(
           tintColor={tone.iconColor}
         />
       </Voltra.VStack>
-      <Voltra.Text style={{ color: Colors.textSecondary, fontSize: 10, marginTop: 5 }}>
+      <Voltra.Text style={{ color: theme.colors.textSecondary, fontSize: 10, marginTop: 5 }}>
         {label}
       </Voltra.Text>
       <Voltra.Text
@@ -145,33 +174,33 @@ function renderGridTile(
   value: string,
   icon: string,
   tone: Tone,
+  theme: WidgetTheme,
   compact = false,
 ) {
   if (compact) {
     return (
       <Voltra.VStack
         style={{
-          flex: 1,
-          minHeight: 82,
+          height: 64,
           backgroundColor: tone.backgroundColor,
-          borderRadius: 16,
+          borderRadius: 14,
           paddingHorizontal: 6,
-          paddingVertical: 8,
+          paddingVertical: 6,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
         <Voltra.Symbol
           name={icon}
-          size={20}
+          size={18}
           tintColor={tone.iconColor}
         />
         <Voltra.Text
           style={{
-            color: Colors.text,
-            fontSize: 11,
+            color: theme.colors.text,
+            fontSize: 10,
             fontWeight: '700',
-            marginTop: 4,
+            marginTop: 3,
           }}
         >
           {label}
@@ -181,7 +210,7 @@ function renderGridTile(
             color: tone.valueColor,
             fontSize: 9,
             fontWeight: '600',
-            marginTop: 1,
+            marginTop: 0,
           }}
         >
           {value}
@@ -209,7 +238,7 @@ function renderGridTile(
       <Voltra.VStack style={{ marginLeft: 8 }}>
         <Voltra.Text
           style={{
-            color: Colors.text,
+            color: theme.colors.text,
             fontSize: 13,
             fontWeight: '700',
           }}
@@ -235,6 +264,7 @@ function renderStatusRow(
   value: string,
   icon: string,
   tone: Tone,
+  theme: WidgetTheme,
 ) {
   return (
     <Voltra.HStack
@@ -254,7 +284,7 @@ function renderStatusRow(
       />
       <Voltra.Text
         style={{
-          color: Colors.text,
+          color: theme.colors.text,
           fontSize: 15,
           marginLeft: 10,
           fontWeight: '600',
@@ -268,9 +298,12 @@ function renderStatusRow(
 
 export function buildDashboardSnapshotWidgetVariants(
   snapshot: DashboardSnapshot,
+  colorScheme: ColorSchemeName = Appearance.getColorScheme(),
 ): WidgetVariants {
   'use no memo';
-  const sleep = getSleepPresentation(snapshot);
+  const theme = resolveWidgetTheme(colorScheme);
+  const { colors, feedTone, diaperTone, idleNowTone, primaryHeading, badgeBackground } = theme;
+  const sleep = getSleepPresentation(snapshot, theme);
   const feedLabel = getRelativeLabel(snapshot.lastFeedAt, 'No feeds yet');
   const diaperLabel = getRelativeLabel(snapshot.lastDiaperAt, 'No diapers yet');
   const feedCompactLabel = getCompactRelativeLabel(snapshot.lastFeedAt, '--');
@@ -285,74 +318,70 @@ export function buildDashboardSnapshotWidgetVariants(
 
   const nowTone: Tone = snapshot.sleepStatus === 'awake'
     ? {
-        backgroundColor: '#FEF1E4',
-        iconColor: Colors.accent,
-        valueColor: Colors.accent,
+        backgroundColor: theme.isDark ? '#47351F' : '#FEF1E4',
+        iconColor: colors.accent,
+        valueColor: colors.accent,
       }
     : snapshot.sleepStatus === 'sleeping'
       ? {
-          backgroundColor: '#E7F4EE',
-          iconColor: '#21A789',
-          valueColor: '#21A789',
+          backgroundColor: theme.isDark ? '#1F4139' : '#E7F4EE',
+          iconColor: theme.isDark ? '#4CD1A8' : '#21A789',
+          valueColor: theme.isDark ? '#4CD1A8' : '#21A789',
         }
-      : {
-          backgroundColor: '#EAF0FB',
-          iconColor: Colors.primaryLight,
-          valueColor: Colors.primaryDark,
-        };
+      : idleNowTone;
 
   return {
     systemSmall: (
-      <Voltra.VStack style={{ backgroundColor: Colors.background, padding: 13, flex: 1 }}>
-        <Voltra.Text style={{ color: Colors.textTertiary, fontSize: 10, fontWeight: '700' }}>
+      <Voltra.VStack style={{ backgroundColor: colors.background, padding: 13, flex: 1 }}>
+        <Voltra.Text style={{ color: colors.textTertiary, fontSize: 10, fontWeight: '700' }}>
           STEADYDAD
         </Voltra.Text>
-        <Voltra.Text style={{ color: Colors.primaryDark, fontSize: 24, fontWeight: '700', marginTop: 2 }}>
+        <Voltra.Text style={{ color: primaryHeading, fontSize: 24, fontWeight: '700', marginTop: 2 }}>
           {snapshot.babyName}
         </Voltra.Text>
-        <Voltra.Text style={{ color: Colors.textSecondary, fontSize: 12, marginTop: 1 }}>
+        <Voltra.Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 1 }}>
           {headerSubline}
         </Voltra.Text>
         <Voltra.HStack style={{ marginTop: 13 }}>
           <Voltra.VStack style={{ flex: 1 }}>
-            {renderRoundMetric('Feed', feedCompactLabel, 'cup.and.saucer.fill', FEED_TONE)}
+            {renderRoundMetric('Feed', feedCompactLabel, 'cup.and.saucer.fill', feedTone, theme)}
           </Voltra.VStack>
           <Voltra.VStack style={{ flex: 1 }}>
-            {renderRoundMetric('Diaper', diaperCompactLabel, 'drop.fill', DIAPER_TONE)}
+            {renderRoundMetric('Diaper', diaperCompactLabel, 'drop.fill', diaperTone, theme)}
           </Voltra.VStack>
           <Voltra.VStack style={{ flex: 1 }}>
-            {renderRoundMetric('Sleep', sleep.compactValue, sleep.icon, sleepTone)}
+            {renderRoundMetric('Sleep', sleep.compactValue, sleep.icon, sleepTone, theme)}
           </Voltra.VStack>
         </Voltra.HStack>
       </Voltra.VStack>
     ),
     systemMedium: (
-      <Voltra.VStack style={{ backgroundColor: Colors.background, padding: 14, flex: 1 }}>
+      <Voltra.VStack style={{ backgroundColor: colors.background, padding: 12, flex: 1 }}>
         <Voltra.HStack style={{ flex: 1, alignItems: 'stretch' }}>
           <Voltra.VStack style={{ flex: 4, justifyContent: 'center', paddingRight: 8 }}>
-            <Voltra.Text style={{ color: Colors.primaryDark, fontSize: 22, fontWeight: '700' }}>
+            <Voltra.Text style={{ color: primaryHeading, fontSize: 22, fontWeight: '700' }}>
               {snapshot.babyName}
             </Voltra.Text>
-            <Voltra.Text style={{ color: Colors.textSecondary, fontSize: 13, marginTop: 3 }}>
+            <Voltra.Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 3 }}>
               {headerSubline}
             </Voltra.Text>
           </Voltra.VStack>
 
           <Voltra.VStack style={{ flex: 8, justifyContent: 'center' }}>
-            <Voltra.HStack>
-              <Voltra.VStack style={{ flex: 1, paddingRight: 4 }}>
-                {renderGridTile('Feed', feedCompactLabel, 'cup.and.saucer.fill', FEED_TONE, true)}
+            <Voltra.HStack style={{ alignItems: 'stretch' }}>
+              <Voltra.VStack style={{ flex: 1, marginRight: 4 }}>
+                {renderGridTile('Feed', feedCompactLabel, 'cup.and.saucer.fill', feedTone, theme, true)}
               </Voltra.VStack>
-              <Voltra.VStack style={{ flex: 1, paddingLeft: 4 }}>
-                {renderGridTile('Diaper', diaperCompactLabel, 'drop.fill', DIAPER_TONE, true)}
+              <Voltra.VStack style={{ flex: 1, marginLeft: 4 }}>
+                {renderGridTile('Diaper', diaperCompactLabel, 'drop.fill', diaperTone, theme, true)}
               </Voltra.VStack>
             </Voltra.HStack>
-            <Voltra.HStack style={{ marginTop: 8 }}>
-              <Voltra.VStack style={{ flex: 1, paddingRight: 4 }}>
-                {renderGridTile('Sleep', sleep.durationValue, sleep.icon, sleepTone, true)}
+            <Voltra.HStack style={{ marginTop: 6, alignItems: 'stretch' }}>
+              <Voltra.VStack style={{ flex: 1, marginRight: 4 }}>
+                {renderGridTile('Sleep', sleep.durationValue, sleep.icon, sleepTone, theme, true)}
               </Voltra.VStack>
-              <Voltra.VStack style={{ flex: 1, paddingLeft: 4 }}>
-                {renderGridTile('Now', sleep.compactValue, 'clock.fill', nowTone, true)}
+              <Voltra.VStack style={{ flex: 1, marginLeft: 4 }}>
+                {renderGridTile('Now', sleep.compactValue, 'clock.fill', nowTone, theme, true)}
               </Voltra.VStack>
             </Voltra.HStack>
           </Voltra.VStack>
@@ -360,7 +389,7 @@ export function buildDashboardSnapshotWidgetVariants(
       </Voltra.VStack>
     ),
     systemLarge: (
-      <Voltra.VStack style={{ backgroundColor: Colors.background, padding: 16, flex: 1 }}>
+      <Voltra.VStack style={{ backgroundColor: colors.background, padding: 16, flex: 1 }}>
         <Voltra.HStack style={{ alignItems: 'center' }}>
           <Voltra.VStack
             style={{
@@ -369,35 +398,35 @@ export function buildDashboardSnapshotWidgetVariants(
               borderRadius: 26,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#E9EFFA',
+              backgroundColor: badgeBackground,
             }}
           >
             <Voltra.Symbol
               name="shield.fill"
               size={30}
-              tintColor={Colors.primary}
+              tintColor={colors.primary}
             />
           </Voltra.VStack>
           <Voltra.VStack style={{ marginLeft: 12 }}>
-            <Voltra.Text style={{ color: Colors.primaryDark, fontSize: 36, fontWeight: '700' }}>
+            <Voltra.Text style={{ color: primaryHeading, fontSize: 36, fontWeight: '700' }}>
               {snapshot.babyName}
             </Voltra.Text>
-            <Voltra.Text style={{ color: Colors.textSecondary, fontSize: 18, marginTop: 2 }}>
+            <Voltra.Text style={{ color: colors.textSecondary, fontSize: 18, marginTop: 2 }}>
               {headerSubline}
             </Voltra.Text>
           </Voltra.VStack>
         </Voltra.HStack>
 
         <Voltra.VStack style={{ marginTop: 12 }}>
-          {renderStatusRow('Last feed', feedLabel, 'cup.and.saucer.fill', FEED_TONE)}
+          {renderStatusRow('Last feed', feedLabel, 'cup.and.saucer.fill', feedTone, theme)}
           <Voltra.VStack style={{ marginTop: 8 }}>
-            {renderStatusRow('Last diaper', diaperLabel, 'drop.fill', DIAPER_TONE)}
+            {renderStatusRow('Last diaper', diaperLabel, 'drop.fill', diaperTone, theme)}
           </Voltra.VStack>
           <Voltra.VStack style={{ marginTop: 8 }}>
-            {renderStatusRow('Sleep', sleep.detail, sleep.icon, sleepTone)}
+            {renderStatusRow('Sleep', sleep.detail, sleep.icon, sleepTone, theme)}
           </Voltra.VStack>
           <Voltra.VStack style={{ marginTop: 8 }}>
-            {renderStatusRow('Now', sleep.title, 'clock.fill', nowTone)}
+            {renderStatusRow('Now', sleep.title, 'clock.fill', nowTone, theme)}
           </Voltra.VStack>
         </Voltra.VStack>
 
@@ -410,11 +439,13 @@ export async function updateDashboardSnapshotWidget(
   snapshot: DashboardSnapshot,
   options: DashboardWidgetUpdateOptions = {},
 ): Promise<void> {
+  const { colorScheme, ...widgetOptions } = options;
+
   await updateWidget(
     VOLTRA_WIDGET_IDS.dashboardSnapshot,
-    buildDashboardSnapshotWidgetVariants(snapshot),
+    buildDashboardSnapshotWidgetVariants(snapshot, colorScheme),
     {
-      ...options,
+      ...widgetOptions,
       deepLinkUrl: VOLTRA_DEEP_LINKS.dashboard,
     },
   );

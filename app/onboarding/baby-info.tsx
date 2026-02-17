@@ -3,11 +3,14 @@ import { View, Text, StyleSheet, TextInput, Pressable, Platform, KeyboardAvoidin
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Colors from '@/constants/colors';
+import type { AppThemeColors } from '@/constants/colors';
 import { useBaby } from '@/lib/BabyContext';
+import { useAppTheme } from '@/lib/use-app-theme';
 
 export default function BabyInfoScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const { saveProfile } = useBaby();
   const [name, setName] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -45,7 +48,7 @@ export default function BabyInfoScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </Pressable>
 
         <View style={styles.stepIndicator}>
@@ -55,14 +58,14 @@ export default function BabyInfoScreen() {
         </View>
 
         <Text style={styles.title}>About your baby</Text>
-        <Text style={styles.subtitle}>We'll use this to personalize your experience</Text>
+        <Text style={styles.subtitle}>We&apos;ll use this to personalize your experience</Text>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Baby's Name</Text>
+          <Text style={styles.label}>Baby&apos;s Name</Text>
           <TextInput
             style={styles.input}
             placeholder="What's your baby's name?"
-            placeholderTextColor={Colors.textTertiary}
+            placeholderTextColor={colors.textTertiary}
             value={name}
             onChangeText={setName}
             autoFocus
@@ -73,7 +76,7 @@ export default function BabyInfoScreen() {
           <TextInput
             style={styles.input}
             placeholder="YYYY-MM-DD"
-            placeholderTextColor={Colors.textTertiary}
+            placeholderTextColor={colors.textTertiary}
             value={birthDate}
             onChangeText={handleDateInput}
             keyboardType="numbers-and-punctuation"
@@ -94,17 +97,17 @@ export default function BabyInfoScreen() {
           ]}
         >
           <Text style={styles.nextButtonText}>{saving ? 'Saving...' : 'Continue'}</Text>
-          <Ionicons name="arrow-forward" size={20} color={Colors.white} />
+          <Ionicons name="arrow-forward" size={20} color={colors.white} />
         </Pressable>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     paddingHorizontal: 30,
@@ -126,22 +129,22 @@ const styles = StyleSheet.create({
     height: 4,
     flex: 1,
     borderRadius: 2,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
   },
   stepDotActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   title: {
     fontFamily: 'Nunito_800ExtraBold',
     fontSize: 28,
-    color: Colors.text,
+    color: colors.text,
     letterSpacing: -0.5,
     marginBottom: 8,
   },
   subtitle: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 36,
   },
   form: {
@@ -150,18 +153,18 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 14,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 8,
     marginTop: 16,
   },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 18,
     fontFamily: 'Nunito_500Medium',
     fontSize: 17,
-    color: Colors.text,
-    shadowColor: Colors.shadow,
+    color: colors.text,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
     shadowRadius: 4,
@@ -170,14 +173,14 @@ const styles = StyleSheet.create({
   hint: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 13,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
     marginTop: 6,
   },
   bottomArea: {
     paddingHorizontal: 30,
   },
   nextButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 16,
     paddingVertical: 18,
     flexDirection: 'row',
@@ -191,6 +194,6 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 18,
-    color: Colors.white,
+    color: colors.white,
   },
 });

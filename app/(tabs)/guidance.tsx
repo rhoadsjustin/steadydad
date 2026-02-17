@@ -2,25 +2,24 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Colors from '@/constants/colors';
+import type { AppThemeColors } from '@/constants/colors';
 import { useBaby } from '@/lib/BabyContext';
 import { getDayIndex } from '@/lib/helpers';
 import { getGuidanceItems, markGuidanceViewed, getViewedGuidanceIds } from '@/lib/storage';
 import { GuidanceItem } from '@/lib/types';
+import { useAppTheme } from '@/lib/use-app-theme';
 
 export default function GuidanceScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const { profile } = useBaby();
   const [items, setItems] = useState<GuidanceItem[]>([]);
   const [viewedIds, setViewedIds] = useState<string[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
 
-  useEffect(() => {
-    loadGuidance();
-  }, [profile]);
-
-  const loadGuidance = async () => {
+  const loadGuidance = React.useCallback(async () => {
     const all = await getGuidanceItems();
     const viewed = await getViewedGuidanceIds();
     setViewedIds(viewed);
@@ -34,7 +33,11 @@ export default function GuidanceScreen() {
     const available = all.filter((i) => i.dayIndex <= currentDay);
     available.sort((a, b) => b.dayIndex - a.dayIndex);
     setItems(available);
-  };
+  }, [profile]);
+
+  useEffect(() => {
+    loadGuidance();
+  }, [loadGuidance]);
 
   const handleExpand = async (item: GuidanceItem) => {
     if (expandedId === item.id) {
@@ -55,9 +58,9 @@ export default function GuidanceScreen() {
       <Text style={styles.screenTitle}>Dad Tips</Text>
       {items.length === 0 ? (
         <View style={styles.emptyState}>
-          <Ionicons name="bulb-outline" size={48} color={Colors.textTertiary} />
+          <Ionicons name="bulb-outline" size={48} color={colors.textTertiary} />
           <Text style={styles.emptyTitle}>Tips will appear here</Text>
-          <Text style={styles.emptySubtitle}>Daily guidance based on your baby's age</Text>
+          <Text style={styles.emptySubtitle}>Daily guidance based on your baby&apos;s age</Text>
         </View>
       ) : (
         <FlatList
@@ -89,12 +92,12 @@ export default function GuidanceScreen() {
                   </View>
                   <View style={styles.tipHeaderRight}>
                     {isViewed && (
-                      <Ionicons name="checkmark-circle" size={18} color={Colors.success} />
+                      <Ionicons name="checkmark-circle" size={18} color={colors.success} />
                     )}
                     <Ionicons
                       name={isExpanded ? 'chevron-up' : 'chevron-down'}
                       size={18}
-                      color={Colors.textTertiary}
+                      color={colors.textTertiary}
                     />
                   </View>
                 </View>
@@ -109,15 +112,15 @@ export default function GuidanceScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   screenTitle: {
     fontFamily: 'Nunito_800ExtraBold',
     fontSize: 28,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 16,
     marginTop: 16,
     paddingHorizontal: 20,
@@ -132,22 +135,22 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 18,
-    color: Colors.text,
+    color: colors.text,
     marginTop: 16,
   },
   emptySubtitle: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 6,
     textAlign: 'center',
   },
   tipCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 18,
     marginBottom: 10,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
     shadowRadius: 4,
@@ -155,7 +158,7 @@ const styles = StyleSheet.create({
   },
   tipCardToday: {
     borderWidth: 2,
-    borderColor: Colors.accent,
+    borderColor: colors.accent,
   },
   tipHeader: {
     flexDirection: 'row',
@@ -174,7 +177,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   todayBadge: {
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
@@ -182,25 +185,25 @@ const styles = StyleSheet.create({
   todayBadgeText: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 11,
-    color: Colors.white,
+    color: colors.white,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   tipDay: {
     fontFamily: 'Nunito_600SemiBold',
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   tipTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 17,
-    color: Colors.text,
+    color: colors.text,
     lineHeight: 24,
   },
   tipBody: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 10,
     lineHeight: 22,
   },

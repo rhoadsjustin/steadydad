@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput, Platform, Alert,
+  View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
-import Colors from '@/constants/colors';
+import type { AppThemeColors } from '@/constants/colors';
 import { useBaby } from '@/lib/BabyContext';
 import { formatDate, formatTime } from '@/lib/helpers';
 import { Milestone } from '@/lib/types';
+import { useAppTheme } from '@/lib/use-app-theme';
 
 export default function MilestonesScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const { milestones, addMilestone } = useBaby();
   const [showAdd, setShowAdd] = useState(false);
   const [title, setTitle] = useState('');
@@ -52,15 +55,15 @@ export default function MilestonesScreen() {
           onPress={() => setShowAdd(true)}
           style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.8 }]}
         >
-          <Ionicons name="add" size={24} color={Colors.white} />
+          <Ionicons name="add" size={24} color={colors.white} />
         </Pressable>
       </View>
 
       {milestones.length === 0 ? (
         <View style={styles.emptyState}>
-          <Ionicons name="star-outline" size={48} color={Colors.textTertiary} />
+          <Ionicons name="star-outline" size={48} color={colors.textTertiary} />
           <Text style={styles.emptyTitle}>No milestones yet</Text>
-          <Text style={styles.emptySubtitle}>Tap + to log your baby's first milestone</Text>
+          <Text style={styles.emptySubtitle}>Tap + to log your baby&apos;s first milestone</Text>
         </View>
       ) : (
         <FlatList
@@ -97,7 +100,7 @@ export default function MilestonesScreen() {
             <TextInput
               style={styles.input}
               placeholder="What milestone is this?"
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={colors.textTertiary}
               value={title}
               onChangeText={setTitle}
               autoFocus
@@ -106,7 +109,7 @@ export default function MilestonesScreen() {
             <TextInput
               style={[styles.input, styles.noteInput]}
               placeholder="Add a note (optional)"
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={colors.textTertiary}
               value={note}
               onChangeText={setNote}
               multiline
@@ -120,7 +123,7 @@ export default function MilestonesScreen() {
                 <Image source={{ uri: photoUri }} style={styles.photoPreview} contentFit="cover" />
               ) : (
                 <View style={styles.photoPlaceholder}>
-                  <Ionicons name="camera-outline" size={28} color={Colors.textTertiary} />
+                  <Ionicons name="camera-outline" size={28} color={colors.textTertiary} />
                   <Text style={styles.photoPlaceholderText}>Add Photo</Text>
                 </View>
               )}
@@ -177,10 +180,10 @@ export default function MilestonesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   headerRow: {
     flexDirection: 'row',
@@ -193,14 +196,14 @@ const styles = StyleSheet.create({
   screenTitle: {
     fontFamily: 'Nunito_800ExtraBold',
     fontSize: 28,
-    color: Colors.text,
+    color: colors.text,
     letterSpacing: -0.5,
   },
   addButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -213,22 +216,22 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 18,
-    color: Colors.text,
+    color: colors.text,
     marginTop: 16,
   },
   emptySubtitle: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 6,
     textAlign: 'center',
   },
   milestoneCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 12,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 6,
@@ -244,27 +247,27 @@ const styles = StyleSheet.create({
   milestoneTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 17,
-    color: Colors.text,
+    color: colors.text,
   },
   milestoneDate: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 4,
   },
   milestoneNote: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 6,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: Colors.overlay,
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -275,23 +278,23 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: colors.borderLight,
     alignSelf: 'center',
     marginBottom: 20,
   },
   modalTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 20,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 20,
   },
   input: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: colors.surfaceSecondary,
     borderRadius: 14,
     padding: 16,
     fontFamily: 'Nunito_500Medium',
     fontSize: 16,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 12,
   },
   noteInput: {
@@ -310,22 +313,22 @@ const styles = StyleSheet.create({
   },
   photoPlaceholder: {
     height: 100,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: colors.surfaceSecondary,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderStyle: 'dashed',
   },
   photoPlaceholderText: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 14,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
     marginTop: 6,
   },
   saveButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
@@ -336,10 +339,10 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 16,
-    color: Colors.white,
+    color: colors.white,
   },
   detailSheet: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -356,19 +359,19 @@ const styles = StyleSheet.create({
   detailTitle: {
     fontFamily: 'Nunito_800ExtraBold',
     fontSize: 24,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 4,
   },
   detailDate: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 12,
   },
   detailNote: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 24,
     marginBottom: 16,
   },
@@ -380,6 +383,6 @@ const styles = StyleSheet.create({
   closeDetailText: {
     fontFamily: 'Nunito_600SemiBold',
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
 });

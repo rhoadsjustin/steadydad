@@ -6,15 +6,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, Redirect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import Colors from '@/constants/colors';
+import type { AppThemeColors } from '@/constants/colors';
 import { useBaby } from '@/lib/BabyContext';
 import { buildDashboardSnapshot } from '@/lib/dashboardSnapshot';
 import { getBabyAge, getRelativeTime, getSleepDuration } from '@/lib/helpers';
+import { useAppTheme } from '@/lib/use-app-theme';
 
 type ModalType = 'feed' | 'diaper' | 'mood' | null;
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const { profile, events, isLoading, onboardingDone, logEvent } = useBaby();
   const [activeModal, setActiveModal] = useState<ModalType>(null);
 
@@ -87,7 +90,7 @@ export default function DashboardScreen() {
             onPress={() => router.push('/helper')}
             style={({ pressed }) => [styles.helperButton, pressed && styles.pressed]}
           >
-            <Ionicons name="help-circle" size={22} color={Colors.white} />
+            <Ionicons name="help-circle" size={22} color={colors.white} />
           </Pressable>
         </View>
 
@@ -97,14 +100,16 @@ export default function DashboardScreen() {
             iconFamily="material-community"
             label="Last Feed"
             value={lastFeedAt ? getRelativeTime(lastFeedAt) : 'No feeds yet'}
-            color={Colors.feed}
+            color={colors.feed}
+            styles={styles}
           />
           <StatusCard
             icon="water-outline"
             iconFamily="ionicons"
             label="Last Diaper"
             value={lastDiaperAt ? getRelativeTime(lastDiaperAt) : 'No diapers yet'}
-            color={Colors.diaper}
+            color={colors.diaper}
+            styles={styles}
           />
         </View>
 
@@ -114,7 +119,7 @@ export default function DashboardScreen() {
               <Ionicons
                 name={isSleeping ? 'moon' : 'sunny-outline'}
                 size={24}
-                color={Colors.sleep}
+                color={colors.sleep}
               />
             </View>
             <View style={styles.sleepInfo}>
@@ -136,29 +141,33 @@ export default function DashboardScreen() {
             icon="baby-bottle"
             iconFamily="material-community"
             label="Feed"
-            color={Colors.feed}
+            color={colors.feed}
             onPress={() => handleQuickAction('feed')}
+            styles={styles}
           />
           <QuickActionButton
             icon="water-outline"
             iconFamily="ionicons"
             label="Diaper"
-            color={Colors.diaper}
+            color={colors.diaper}
             onPress={() => handleQuickAction('diaper')}
+            styles={styles}
           />
           <QuickActionButton
             icon={isSleeping ? 'sunny-outline' : 'moon-outline'}
             iconFamily="ionicons"
             label={isSleeping ? 'Wake' : 'Sleep'}
-            color={Colors.sleep}
+            color={colors.sleep}
             onPress={() => handleQuickAction('sleep')}
+            styles={styles}
           />
           <QuickActionButton
             icon="happy-outline"
             iconFamily="ionicons"
             label="Mood"
-            color={Colors.mood}
+            color={colors.mood}
             onPress={() => handleQuickAction('mood')}
+            styles={styles}
           />
         </View>
 
@@ -167,25 +176,30 @@ export default function DashboardScreen() {
           style={({ pressed }) => [styles.helperBanner, pressed && styles.pressed]}
         >
           <View style={styles.helperBannerContent}>
-            <Ionicons name="help-buoy-outline" size={28} color={Colors.primary} />
+            <Ionicons name="help-buoy-outline" size={28} color={colors.primary} />
             <View style={styles.helperBannerText}>
               <Text style={styles.helperBannerTitle}>What should I do?</Text>
               <Text style={styles.helperBannerSub}>Step-by-step guides for common situations</Text>
             </View>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={Colors.textTertiary} />
+          <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
         </Pressable>
       </ScrollView>
 
-      <FeedModal visible={activeModal === 'feed'} onClose={() => setActiveModal(null)} onSelect={handleFeed} />
-      <DiaperModal visible={activeModal === 'diaper'} onClose={() => setActiveModal(null)} onSelect={handleDiaper} />
-      <MoodModal visible={activeModal === 'mood'} onClose={() => setActiveModal(null)} onSelect={handleMood} />
+      <FeedModal visible={activeModal === 'feed'} onClose={() => setActiveModal(null)} onSelect={handleFeed} colors={colors} styles={styles} />
+      <DiaperModal visible={activeModal === 'diaper'} onClose={() => setActiveModal(null)} onSelect={handleDiaper} colors={colors} styles={styles} />
+      <MoodModal visible={activeModal === 'mood'} onClose={() => setActiveModal(null)} onSelect={handleMood} colors={colors} styles={styles} />
     </View>
   );
 }
 
-function StatusCard({ icon, iconFamily, label, value, color }: {
-  icon: string; iconFamily: string; label: string; value: string; color: string;
+function StatusCard({ icon, iconFamily, label, value, color, styles }: {
+  icon: string;
+  iconFamily: string;
+  label: string;
+  value: string;
+  color: string;
+  styles: ReturnType<typeof createStyles>;
 }) {
   const IconComponent = iconFamily === 'material-community' ? MaterialCommunityIcons : Ionicons;
   return (
@@ -199,8 +213,13 @@ function StatusCard({ icon, iconFamily, label, value, color }: {
   );
 }
 
-function QuickActionButton({ icon, iconFamily, label, color, onPress }: {
-  icon: string; iconFamily: string; label: string; color: string; onPress: () => void;
+function QuickActionButton({ icon, iconFamily, label, color, onPress, styles }: {
+  icon: string;
+  iconFamily: string;
+  label: string;
+  color: string;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
 }) {
   const IconComponent = iconFamily === 'material-community' ? MaterialCommunityIcons : Ionicons;
   return (
@@ -216,8 +235,12 @@ function QuickActionButton({ icon, iconFamily, label, color, onPress }: {
   );
 }
 
-function FeedModal({ visible, onClose, onSelect }: {
-  visible: boolean; onClose: () => void; onSelect: (type: 'breast_milk' | 'formula' | 'solid') => void;
+function FeedModal({ visible, onClose, onSelect, colors, styles }: {
+  visible: boolean;
+  onClose: () => void;
+  onSelect: (type: 'breast_milk' | 'formula' | 'solid') => void;
+  colors: AppThemeColors;
+  styles: ReturnType<typeof createStyles>;
 }) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -225,9 +248,9 @@ function FeedModal({ visible, onClose, onSelect }: {
         <Pressable style={styles.modalSheet} onPress={() => {}}>
           <View style={styles.modalHandle} />
           <Text style={styles.modalTitle}>Log Feed</Text>
-          <ModalOption icon="water-outline" label="Breast Milk" onPress={() => onSelect('breast_milk')} color={Colors.feed} />
-          <ModalOption icon="flask-outline" label="Formula" onPress={() => onSelect('formula')} color={Colors.feed} />
-          <ModalOption icon="restaurant-outline" label="Solid Food" onPress={() => onSelect('solid')} color={Colors.feed} />
+          <ModalOption icon="water-outline" label="Breast Milk" onPress={() => onSelect('breast_milk')} color={colors.feed} colors={colors} styles={styles} />
+          <ModalOption icon="flask-outline" label="Formula" onPress={() => onSelect('formula')} color={colors.feed} colors={colors} styles={styles} />
+          <ModalOption icon="restaurant-outline" label="Solid Food" onPress={() => onSelect('solid')} color={colors.feed} colors={colors} styles={styles} />
           <Pressable onPress={onClose} style={styles.modalCancel}>
             <Text style={styles.modalCancelText}>Cancel</Text>
           </Pressable>
@@ -237,8 +260,12 @@ function FeedModal({ visible, onClose, onSelect }: {
   );
 }
 
-function DiaperModal({ visible, onClose, onSelect }: {
-  visible: boolean; onClose: () => void; onSelect: (kind: 'wet' | 'dirty' | 'both') => void;
+function DiaperModal({ visible, onClose, onSelect, colors, styles }: {
+  visible: boolean;
+  onClose: () => void;
+  onSelect: (kind: 'wet' | 'dirty' | 'both') => void;
+  colors: AppThemeColors;
+  styles: ReturnType<typeof createStyles>;
 }) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -246,9 +273,9 @@ function DiaperModal({ visible, onClose, onSelect }: {
         <Pressable style={styles.modalSheet} onPress={() => {}}>
           <View style={styles.modalHandle} />
           <Text style={styles.modalTitle}>Log Diaper</Text>
-          <ModalOption icon="water-outline" label="Wet" onPress={() => onSelect('wet')} color={Colors.diaper} />
-          <ModalOption icon="ellipse" label="Dirty" onPress={() => onSelect('dirty')} color={Colors.diaper} />
-          <ModalOption icon="swap-horizontal-outline" label="Both" onPress={() => onSelect('both')} color={Colors.diaper} />
+          <ModalOption icon="water-outline" label="Wet" onPress={() => onSelect('wet')} color={colors.diaper} colors={colors} styles={styles} />
+          <ModalOption icon="ellipse" label="Dirty" onPress={() => onSelect('dirty')} color={colors.diaper} colors={colors} styles={styles} />
+          <ModalOption icon="swap-horizontal-outline" label="Both" onPress={() => onSelect('both')} color={colors.diaper} colors={colors} styles={styles} />
           <Pressable onPress={onClose} style={styles.modalCancel}>
             <Text style={styles.modalCancelText}>Cancel</Text>
           </Pressable>
@@ -258,8 +285,12 @@ function DiaperModal({ visible, onClose, onSelect }: {
   );
 }
 
-function MoodModal({ visible, onClose, onSelect }: {
-  visible: boolean; onClose: () => void; onSelect: (mood: 'happy' | 'fussy' | 'crying' | 'calm') => void;
+function MoodModal({ visible, onClose, onSelect, colors, styles }: {
+  visible: boolean;
+  onClose: () => void;
+  onSelect: (mood: 'happy' | 'fussy' | 'crying' | 'calm') => void;
+  colors: AppThemeColors;
+  styles: ReturnType<typeof createStyles>;
 }) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -267,10 +298,10 @@ function MoodModal({ visible, onClose, onSelect }: {
         <Pressable style={styles.modalSheet} onPress={() => {}}>
           <View style={styles.modalHandle} />
           <Text style={styles.modalTitle}>Log Mood</Text>
-          <ModalOption icon="happy-outline" label="Happy" onPress={() => onSelect('happy')} color="#4CAF50" />
-          <ModalOption icon="sad-outline" label="Fussy" onPress={() => onSelect('fussy')} color="#FF9800" />
-          <ModalOption icon="alert-circle-outline" label="Crying" onPress={() => onSelect('crying')} color="#E53935" />
-          <ModalOption icon="leaf-outline" label="Calm" onPress={() => onSelect('calm')} color="#5B8DB8" />
+          <ModalOption icon="happy-outline" label="Happy" onPress={() => onSelect('happy')} color={colors.success} colors={colors} styles={styles} />
+          <ModalOption icon="sad-outline" label="Fussy" onPress={() => onSelect('fussy')} color={colors.warning} colors={colors} styles={styles} />
+          <ModalOption icon="alert-circle-outline" label="Crying" onPress={() => onSelect('crying')} color={colors.danger} colors={colors} styles={styles} />
+          <ModalOption icon="leaf-outline" label="Calm" onPress={() => onSelect('calm')} color={colors.sleep} colors={colors} styles={styles} />
           <Pressable onPress={onClose} style={styles.modalCancel}>
             <Text style={styles.modalCancelText}>Cancel</Text>
           </Pressable>
@@ -280,38 +311,43 @@ function MoodModal({ visible, onClose, onSelect }: {
   );
 }
 
-function ModalOption({ icon, label, onPress, color }: {
-  icon: string; label: string; onPress: () => void; color: string;
+function ModalOption({ icon, label, onPress, color, colors, styles }: {
+  icon: string;
+  label: string;
+  onPress: () => void;
+  color: string;
+  colors: AppThemeColors;
+  styles: ReturnType<typeof createStyles>;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.modalOption, pressed && { backgroundColor: Colors.surfaceSecondary }]}
+      style={({ pressed }) => [styles.modalOption, pressed && { backgroundColor: colors.surfaceSecondary }]}
     >
       <View style={[styles.modalOptionIcon, { backgroundColor: color + '15' }]}>
         <Ionicons name={icon as any} size={22} color={color} />
       </View>
       <Text style={styles.modalOptionLabel}>{label}</Text>
-      <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} />
+      <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -326,26 +362,26 @@ const styles = StyleSheet.create({
   greeting: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 2,
   },
   babyName: {
     fontFamily: 'Nunito_800ExtraBold',
     fontSize: 28,
-    color: Colors.text,
+    color: colors.text,
     letterSpacing: -0.5,
   },
   babyAge: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   helperButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 4,
@@ -361,10 +397,10 @@ const styles = StyleSheet.create({
   },
   statusCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 8,
@@ -381,20 +417,20 @@ const styles = StyleSheet.create({
   statusLabel: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   statusValue: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 15,
-    color: Colors.text,
+    color: colors.text,
   },
   sleepCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 28,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 8,
@@ -408,7 +444,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: Colors.sleep + '15',
+    backgroundColor: colors.sleep + '15',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
@@ -419,18 +455,18 @@ const styles = StyleSheet.create({
   sleepLabel: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 2,
   },
   sleepValue: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 15,
-    color: Colors.text,
+    color: colors.text,
   },
   sectionTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 18,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 14,
   },
   quickActions: {
@@ -457,16 +493,16 @@ const styles = StyleSheet.create({
   quickActionLabel: {
     fontFamily: 'Nunito_600SemiBold',
     fontSize: 13,
-    color: Colors.text,
+    color: colors.text,
   },
   helperBanner: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 8,
@@ -484,21 +520,21 @@ const styles = StyleSheet.create({
   helperBannerTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 16,
-    color: Colors.text,
+    color: colors.text,
   },
   helperBannerSub: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: Colors.overlay,
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -509,14 +545,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: colors.borderLight,
     alignSelf: 'center',
     marginBottom: 20,
   },
   modalTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 20,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 16,
   },
   modalOption: {
@@ -537,7 +573,7 @@ const styles = StyleSheet.create({
   modalOptionLabel: {
     fontFamily: 'Nunito_600SemiBold',
     fontSize: 16,
-    color: Colors.text,
+    color: colors.text,
     flex: 1,
   },
   modalCancel: {
@@ -548,6 +584,6 @@ const styles = StyleSheet.create({
   modalCancelText: {
     fontFamily: 'Nunito_600SemiBold',
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
 });

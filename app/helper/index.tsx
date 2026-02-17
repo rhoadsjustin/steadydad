@@ -1,15 +1,18 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Colors from '@/constants/colors';
+import type { AppThemeColors } from '@/constants/colors';
 import { useBaby } from '@/lib/BabyContext';
 import { getRelativeTime } from '@/lib/helpers';
 import { helperTopics } from '@/lib/helper-topics';
+import { useAppTheme } from '@/lib/use-app-theme';
 
 export default function HelperIndexScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const { getLastEventByType, getLastSleepEvent } = useBaby();
 
   const lastFeed = getLastEventByType('feed');
@@ -30,16 +33,22 @@ export default function HelperIndexScreen() {
             icon="restaurant-outline"
             label="Fed"
             value={lastFeed ? getRelativeTime(lastFeed.timestamp) : 'No data'}
+            colors={colors}
+            styles={styles}
           />
           <ContextItem
             icon="water-outline"
             label="Diaper"
             value={lastDiaper ? getRelativeTime(lastDiaper.timestamp) : 'No data'}
+            colors={colors}
+            styles={styles}
           />
           <ContextItem
             icon="moon-outline"
             label="Sleep"
             value={isSleeping ? 'Sleeping' : lastSleep ? getRelativeTime(lastSleep.timestamp) : 'No data'}
+            colors={colors}
+            styles={styles}
           />
         </View>
       </View>
@@ -53,44 +62,56 @@ export default function HelperIndexScreen() {
           style={({ pressed }) => [styles.topicCard, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
         >
           <View style={styles.topicIcon}>
-            <Ionicons name={topic.icon as any} size={26} color={Colors.primary} />
+            <Ionicons name={topic.icon as any} size={26} color={colors.primary} />
           </View>
           <View style={styles.topicContent}>
             <Text style={styles.topicTitle}>{topic.title}</Text>
             <Text style={styles.topicDescription}>{topic.description}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={Colors.textTertiary} />
+          <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
         </Pressable>
       ))}
     </ScrollView>
   );
 }
 
-function ContextItem({ icon, label, value }: { icon: string; label: string; value: string }) {
+function ContextItem({
+  icon,
+  label,
+  value,
+  colors,
+  styles,
+}: {
+  icon: string;
+  label: string;
+  value: string;
+  colors: AppThemeColors;
+  styles: ReturnType<typeof createStyles>;
+}) {
   return (
     <View style={styles.contextItem}>
-      <Ionicons name={icon as any} size={18} color={Colors.primary} />
+      <Ionicons name={icon as any} size={18} color={colors.primary} />
       <Text style={styles.contextLabel}>{label}</Text>
       <Text style={styles.contextValue}>{value}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 12,
   },
   contextBanner: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
     shadowRadius: 4,
@@ -99,7 +120,7 @@ const styles = StyleSheet.create({
   contextTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 12,
@@ -116,27 +137,27 @@ const styles = StyleSheet.create({
   contextLabel: {
     fontFamily: 'Nunito_600SemiBold',
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   contextValue: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 13,
-    color: Colors.text,
+    color: colors.text,
   },
   sectionTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 16,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 14,
   },
   topicCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 18,
     marginBottom: 10,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
     shadowRadius: 4,
@@ -146,7 +167,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 16,
-    backgroundColor: Colors.primary + '12',
+    backgroundColor: colors.primary + '12',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
@@ -157,12 +178,12 @@ const styles = StyleSheet.create({
   topicTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 16,
-    color: Colors.text,
+    color: colors.text,
   },
   topicDescription: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
 });
