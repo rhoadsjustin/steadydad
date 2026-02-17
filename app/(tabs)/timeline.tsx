@@ -2,14 +2,17 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import Colors from '@/constants/colors';
+import type { AppThemeColors } from '@/constants/colors';
 import { useBaby } from '@/lib/BabyContext';
 import { getEventSummary, getEventColor, getEventTypeLabel, formatTime, formatDate } from '@/lib/helpers';
 import { BabyEvent } from '@/lib/types';
+import { useAppTheme } from '@/lib/use-app-theme';
 
 export default function TimelineScreen() {
   const insets = useSafeAreaInsets();
-  const { events, isLoading } = useBaby();
+  const { colors } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+  const { events } = useBaby();
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
 
   const groupedEvents = React.useMemo(() => {
@@ -43,7 +46,7 @@ export default function TimelineScreen() {
       <Text style={styles.screenTitle}>Timeline</Text>
       {events.length === 0 ? (
         <View style={styles.emptyState}>
-          <Ionicons name="time-outline" size={48} color={Colors.textTertiary} />
+          <Ionicons name="time-outline" size={48} color={colors.textTertiary} />
           <Text style={styles.emptyTitle}>No events yet</Text>
           <Text style={styles.emptySubtitle}>Log your first activity from the dashboard</Text>
         </View>
@@ -61,7 +64,7 @@ export default function TimelineScreen() {
                 </View>
               );
             }
-            return <EventRow event={item.event} />;
+            return <EventRow event={item.event} styles={styles} colors={colors} />;
           }}
         />
       )}
@@ -69,7 +72,15 @@ export default function TimelineScreen() {
   );
 }
 
-function EventRow({ event }: { event: BabyEvent }) {
+function EventRow({
+  event,
+  styles,
+  colors,
+}: {
+  event: BabyEvent;
+  styles: ReturnType<typeof createStyles>;
+  colors: AppThemeColors;
+}) {
   const color = getEventColor(event.type);
   const typeLabel = getEventTypeLabel(event.type);
   const summary = getEventSummary(event);
@@ -110,16 +121,16 @@ function EventRow({ event }: { event: BabyEvent }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     paddingHorizontal: 20,
   },
   screenTitle: {
     fontFamily: 'Nunito_800ExtraBold',
     fontSize: 28,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 16,
     marginTop: 16,
     letterSpacing: -0.5,
@@ -133,13 +144,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 18,
-    color: Colors.text,
+    color: colors.text,
     marginTop: 16,
   },
   emptySubtitle: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 6,
     textAlign: 'center',
   },
@@ -150,7 +161,7 @@ const styles = StyleSheet.create({
   dateHeaderText: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -173,17 +184,17 @@ const styles = StyleSheet.create({
   timelineLine: {
     width: 2,
     flex: 1,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: colors.borderLight,
     minHeight: 16,
   },
   eventContent: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 14,
     marginLeft: 10,
     marginBottom: 8,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
     shadowRadius: 4,
@@ -201,12 +212,12 @@ const styles = StyleSheet.create({
   eventTime: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   eventSummary: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 4,
   },
 });

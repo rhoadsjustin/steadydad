@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import Colors from '@/constants/colors';
+import type { AppThemeColors } from '@/constants/colors';
 import { helperTopics } from '@/lib/helper-topics';
+import { useAppTheme } from '@/lib/use-app-theme';
 
 export default function HelperTopicScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const { topic: topicId } = useLocalSearchParams<{ topic: string }>();
   const topic = helperTopics.find((t) => t.id === topicId);
   const [checkedSteps, setCheckedSteps] = useState<Set<number>>(new Set());
@@ -64,7 +67,7 @@ export default function HelperTopicScreen() {
                 style={[styles.stepCard, isChecked && styles.stepCardChecked]}
               >
                 <View style={[styles.checkbox, isChecked && styles.checkboxChecked]}>
-                  {isChecked && <Ionicons name="checkmark" size={16} color={Colors.white} />}
+                  {isChecked && <Ionicons name="checkmark" size={16} color={colors.white} />}
                 </View>
                 <Text style={[styles.stepText, isChecked && styles.stepTextChecked]}>
                   {step}
@@ -76,10 +79,10 @@ export default function HelperTopicScreen() {
 
         {allChecked && (
           <View style={styles.doneContainer}>
-            <Ionicons name="checkmark-circle" size={40} color={Colors.success} />
+            <Ionicons name="checkmark-circle" size={40} color={colors.success} />
             <Text style={styles.doneTitle}>All steps completed!</Text>
             <Text style={styles.doneSubtitle}>
-              You've worked through everything. If things still aren't settling, don't hesitate to call your pediatrician.
+              You&apos;ve worked through everything. If things still aren&apos;t settling, don&apos;t hesitate to call your pediatrician.
             </Text>
           </View>
         )}
@@ -88,10 +91,10 @@ export default function HelperTopicScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -100,7 +103,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 40,
   },
@@ -109,20 +112,20 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 6,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: colors.surfaceSecondary,
     borderRadius: 3,
     marginBottom: 8,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.success,
+    backgroundColor: colors.success,
     borderRadius: 3,
   },
   progressText: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   steps: {
     gap: 8,
@@ -130,61 +133,61 @@ const styles = StyleSheet.create({
   stepCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
     shadowRadius: 3,
     elevation: 1,
   },
   stepCardChecked: {
-    backgroundColor: Colors.success + '08',
+    backgroundColor: colors.success + '08',
   },
   checkbox: {
     width: 28,
     height: 28,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
     marginTop: 1,
   },
   checkboxChecked: {
-    backgroundColor: Colors.success,
-    borderColor: Colors.success,
+    backgroundColor: colors.success,
+    borderColor: colors.success,
   },
   stepText: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 15,
-    color: Colors.text,
+    color: colors.text,
     flex: 1,
     lineHeight: 22,
   },
   stepTextChecked: {
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textDecorationLine: 'line-through',
   },
   doneContainer: {
     alignItems: 'center',
     padding: 28,
     marginTop: 20,
-    backgroundColor: Colors.success + '10',
+    backgroundColor: colors.success + '10',
     borderRadius: 16,
   },
   doneTitle: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 18,
-    color: Colors.text,
+    color: colors.text,
     marginTop: 12,
   },
   doneSubtitle: {
     fontFamily: 'Nunito_400Regular',
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 20,

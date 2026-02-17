@@ -15,7 +15,22 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.steadydad"
+      "bundleIdentifier": "com.steadydad",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "steadydad"
+            ]
+          }
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.steadydad.shared"
+        ]
+      }
     },
     "android": {
       "package": "com.steadydad",
@@ -69,6 +84,31 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {
+        "origin": "https://replit.com/"
+      },
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "SteadyDadLiveActivity",
+                  "bundleIdentifier": "com.steadydad.SteadyDadLiveActivity",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.steadydad.shared"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "69759502-0eca-4fc8-b045-fe6b63ebe305"
+      }
     }
   }
 }

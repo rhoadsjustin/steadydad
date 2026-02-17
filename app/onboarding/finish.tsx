@@ -5,14 +5,20 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Colors from '@/constants/colors';
+import type { AppThemeColors } from '@/constants/colors';
 import { useBaby } from '@/lib/BabyContext';
+import { useAppTheme } from '@/lib/use-app-theme';
 
 export default function FinishScreen() {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const { profile, completeOnboarding } = useBaby();
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
   const webBottomInset = Platform.OS === 'web' ? 34 : 0;
+  const gradientColors: [string, string, string] = isDark
+    ? ['#0F1526', '#13203A', '#1A2A4A']
+    : ['#F7F9FC', '#E8EDF4', '#D6E0F0'];
 
   const handleFinish = async () => {
     await completeOnboarding();
@@ -22,7 +28,7 @@ export default function FinishScreen() {
 
   return (
     <LinearGradient
-      colors={['#F7F9FC', '#E8EDF4', '#D6E0F0']}
+      colors={gradientColors}
       style={styles.container}
     >
       <View style={[styles.content, { paddingTop: insets.top + webTopInset + 60 }]}>
@@ -33,19 +39,19 @@ export default function FinishScreen() {
         </View>
 
         <View style={styles.successIcon}>
-          <Ionicons name="checkmark-circle" size={72} color={Colors.success} />
+          <Ionicons name="checkmark-circle" size={72} color={colors.success} />
         </View>
 
-        <Text style={styles.title}>You're all set!</Text>
+        <Text style={styles.title}>You&apos;re all set!</Text>
         <Text style={styles.subtitle}>
           Welcome to SteadyDad{profile?.name ? `, ${profile.name}'s dad` : ''}.{'\n'}
-          You've got this.
+          You&apos;ve got this.
         </Text>
 
         <View style={styles.tipsContainer}>
-          <TipRow icon="flash" text="Tap quick actions to log events instantly" />
-          <TipRow icon="help-circle" text="Use the helper when you're unsure what to do" />
-          <TipRow icon="bulb" text="Check daily tips for age-appropriate guidance" />
+          <TipRow icon="flash" text="Tap quick actions to log events instantly" colors={colors} styles={styles} />
+          <TipRow icon="help-circle" text="Use the helper when you're unsure what to do" colors={colors} styles={styles} />
+          <TipRow icon="bulb" text="Check daily tips for age-appropriate guidance" colors={colors} styles={styles} />
         </View>
       </View>
 
@@ -54,26 +60,36 @@ export default function FinishScreen() {
           onPress={handleFinish}
           style={({ pressed }) => [styles.finishButton, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
         >
-          <Text style={styles.finishButtonText}>Let's Go</Text>
-          <Ionicons name="arrow-forward" size={20} color={Colors.white} />
+          <Text style={styles.finishButtonText}>Let&apos;s Go</Text>
+          <Ionicons name="arrow-forward" size={20} color={colors.white} />
         </Pressable>
       </View>
     </LinearGradient>
   );
 }
 
-function TipRow({ icon, text }: { icon: string; text: string }) {
+function TipRow({
+  icon,
+  text,
+  colors,
+  styles,
+}: {
+  icon: string;
+  text: string;
+  colors: AppThemeColors;
+  styles: ReturnType<typeof createStyles>;
+}) {
   return (
     <View style={styles.tipRow}>
       <View style={styles.tipIcon}>
-        <Ionicons name={icon as any} size={20} color={Colors.primary} />
+        <Ionicons name={icon as any} size={20} color={colors.primary} />
       </View>
       <Text style={styles.tipText}>{text}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -92,10 +108,10 @@ const styles = StyleSheet.create({
     height: 4,
     flex: 1,
     borderRadius: 2,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
   },
   stepDotActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   successIcon: {
     marginBottom: 24,
@@ -103,7 +119,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Nunito_800ExtraBold',
     fontSize: 32,
-    color: Colors.text,
+    color: colors.text,
     textAlign: 'center',
     letterSpacing: -0.5,
     marginBottom: 10,
@@ -111,7 +127,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 17,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 26,
     marginBottom: 40,
@@ -124,10 +140,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     padding: 16,
     borderRadius: 14,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
     shadowRadius: 4,
@@ -137,28 +153,28 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: Colors.primary + '12',
+    backgroundColor: colors.primary + '12',
     justifyContent: 'center',
     alignItems: 'center',
   },
   tipText: {
     fontFamily: 'Nunito_500Medium',
     fontSize: 15,
-    color: Colors.text,
+    color: colors.text,
     flex: 1,
   },
   bottomArea: {
     paddingHorizontal: 30,
   },
   finishButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 16,
     paddingVertical: 18,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -167,6 +183,6 @@ const styles = StyleSheet.create({
   finishButtonText: {
     fontFamily: 'Nunito_700Bold',
     fontSize: 18,
-    color: Colors.white,
+    color: colors.white,
   },
 });
