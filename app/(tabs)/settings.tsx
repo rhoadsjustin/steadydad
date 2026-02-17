@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, TextInput, Modal, Alert, Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -123,34 +124,41 @@ export default function SettingsScreen() {
       </ScrollView>
 
       <Modal visible={showEdit} transparent animationType="slide" onRequestClose={() => setShowEdit(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowEdit(false)}>
-          <Pressable style={styles.modalSheet} onPress={() => {}}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Edit Profile</Text>
-            <Text style={styles.inputLabel}>Baby's Name</Text>
-            <TextInput
-              style={styles.input}
-              value={editName}
-              onChangeText={setEditName}
-              placeholder="Enter name"
-              placeholderTextColor={Colors.textTertiary}
-            />
-            <Text style={styles.inputLabel}>Birth Date (YYYY-MM-DD)</Text>
-            <TextInput
-              style={styles.input}
-              value={editBirthDate}
-              onChangeText={setEditBirthDate}
-              placeholder="2025-01-15"
-              placeholderTextColor={Colors.textTertiary}
-            />
-            <Pressable
-              onPress={handleSaveProfile}
-              style={({ pressed }) => [styles.saveButton, pressed && { opacity: 0.9 }]}
-            >
-              <Text style={styles.saveButtonText}>Save Changes</Text>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
+          <Pressable style={styles.modalOverlay} onPress={() => setShowEdit(false)}>
+            <Pressable style={styles.modalSheet} onPress={() => {}}>
+              <View style={styles.modalHandle} />
+              <Text style={styles.modalTitle}>Edit Profile</Text>
+              <Text style={styles.inputLabel}>Baby's Name</Text>
+              <TextInput
+                style={styles.input}
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Enter name"
+                placeholderTextColor={Colors.textTertiary}
+              />
+              <Text style={styles.inputLabel}>Birth Date (YYYY-MM-DD)</Text>
+              <TextInput
+                style={styles.input}
+                value={editBirthDate}
+                onChangeText={setEditBirthDate}
+                placeholder="2025-01-15"
+                placeholderTextColor={Colors.textTertiary}
+                keyboardType="numbers-and-punctuation"
+              />
+              <Pressable
+                onPress={handleSaveProfile}
+                style={({ pressed }) => [styles.saveButton, pressed && { opacity: 0.9 }]}
+              >
+                <Text style={styles.saveButtonText}>Save Changes</Text>
+              </Pressable>
             </Pressable>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       <Modal visible={showResetConfirm} transparent animationType="fade" onRequestClose={() => setShowResetConfirm(false)}>
