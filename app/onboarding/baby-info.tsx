@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import type { AppThemeColors } from '@/constants/colors';
 import { useBaby } from '@/lib/BabyContext';
+import { isValidBirthDateInput, normalizeBirthDateInput } from '@/lib/helpers';
 import { useAppTheme } from '@/lib/use-app-theme';
 
 export default function BabyInfoScreen() {
@@ -18,13 +19,16 @@ export default function BabyInfoScreen() {
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
   const webBottomInset = Platform.OS === 'web' ? 34 : 0;
 
-  const isValid = name.trim().length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(birthDate);
+  const isValid = name.trim().length > 0 && isValidBirthDateInput(birthDate);
 
   const handleNext = async () => {
     if (!isValid || saving) return;
+    const normalizedBirthDate = normalizeBirthDateInput(birthDate);
+    if (!normalizedBirthDate) return;
+
     setSaving(true);
     try {
-      await saveProfile(name.trim(), birthDate);
+      await saveProfile(name.trim(), normalizedBirthDate);
       router.push('/onboarding/dad-goals');
     } catch (err) {
       console.error(err);
@@ -34,7 +38,7 @@ export default function BabyInfoScreen() {
   };
 
   const handleDateInput = (text: string) => {
-    const cleaned = text.replace(/[^0-9-]/g, '');
+    const cleaned = text.replace(/[^0-9/-]/g, '');
     setBirthDate(cleaned);
   };
 
@@ -82,7 +86,7 @@ export default function BabyInfoScreen() {
             keyboardType="numbers-and-punctuation"
             maxLength={10}
           />
-          <Text style={styles.hint}>Enter the date in YYYY-MM-DD format (e.g., 2025-06-15)</Text>
+          <Text style={styles.hint}>Use YYYY-MM-DD or MM/DD/YYYY (example: 2026-02-17)</Text>
         </View>
       </ScrollView>
 

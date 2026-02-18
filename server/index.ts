@@ -160,15 +160,50 @@ function serveLandingPage({
   res.status(200).send(html);
 }
 
+function serveTemplatePage({
+  res,
+  template,
+  appName,
+  supportEmail,
+}: {
+  res: Response;
+  template: string;
+  appName: string;
+  supportEmail: string;
+}) {
+  const html = template
+    .replace(/APP_NAME_PLACEHOLDER/g, appName)
+    .replace(/SUPPORT_EMAIL_PLACEHOLDER/g, supportEmail);
+
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.status(200).send(html);
+}
+
 function configureExpoAndLanding(app: express.Application) {
-  const templatePath = path.resolve(
+  const landingTemplatePath = path.resolve(
     process.cwd(),
     "server",
     "templates",
     "landing-page.html",
   );
-  const landingPageTemplate = fs.readFileSync(templatePath, "utf-8");
+  const privacyTemplatePath = path.resolve(
+    process.cwd(),
+    "server",
+    "templates",
+    "privacy-policy.html",
+  );
+  const supportTemplatePath = path.resolve(
+    process.cwd(),
+    "server",
+    "templates",
+    "support.html",
+  );
+
+  const landingPageTemplate = fs.readFileSync(landingTemplatePath, "utf-8");
+  const privacyPolicyTemplate = fs.readFileSync(privacyTemplatePath, "utf-8");
+  const supportTemplate = fs.readFileSync(supportTemplatePath, "utf-8");
   const appName = getAppName();
+  const supportEmail = process.env.SUPPORT_EMAIL || "support@steadydad.app";
 
   log("Serving static Expo files with dynamic manifest routing");
 
@@ -177,22 +212,38 @@ function configureExpoAndLanding(app: express.Application) {
       return next();
     }
 
-    if (req.path !== "/" && req.path !== "/manifest") {
-      return next();
-    }
-
-    const platform = req.header("expo-platform");
-    if (platform && (platform === "ios" || platform === "android")) {
-      return serveExpoManifest(platform, res);
-    }
-
-    if (req.path === "/") {
-      return serveLandingPage({
-        req,
+    if (req.path === "/privacy") {
+      return serveTemplatePage({
         res,
-        landingPageTemplate,
+        template: privacyPolicyTemplate,
         appName,
+        supportEmail,
       });
+    }
+
+    if (req.path === "/support") {
+      return serveTemplatePage({
+        res,
+        template: supportTemplate,
+        appName,
+        supportEmail,
+      });
+    }
+
+    if (req.path === "/" || req.path === "/manifest") {
+      const platform = req.header("expo-platform");
+      if (platform && (platform === "ios" || platform === "android")) {
+        return serveExpoManifest(platform, res);
+      }
+
+      if (req.path === "/") {
+        return serveLandingPage({
+          req,
+          res,
+          landingPageTemplate,
+          appName,
+        });
+      }
     }
 
     next();
