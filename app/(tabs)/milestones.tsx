@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput, Platform,
+  View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput, Platform, KeyboardAvoidingView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import type { AppThemeColors } from '@/constants/colors';
+import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { useBaby } from '@/lib/BabyContext';
 import { formatDate, formatTime } from '@/lib/helpers';
 import { Milestone } from '@/lib/types';
@@ -92,56 +93,70 @@ export default function MilestonesScreen() {
       )}
 
       <Modal visible={showAdd} transparent animationType="slide" onRequestClose={() => setShowAdd(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowAdd(false)}>
-          <Pressable style={styles.modalSheet} onPress={() => {}}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>New Milestone</Text>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
+          <Pressable style={styles.modalOverlay} onPress={() => setShowAdd(false)}>
+            <Pressable style={styles.modalSheet} onPress={() => {}}>
+              <View style={styles.modalHandle} />
+              <KeyboardAwareScrollViewCompat
+                style={styles.modalFormScroll}
+                contentContainerStyle={styles.modalFormContent}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+              >
+                <Text style={styles.modalTitle}>New Milestone</Text>
 
-            <TextInput
-              style={styles.input}
-              placeholder="What milestone is this?"
-              placeholderTextColor={colors.textTertiary}
-              value={title}
-              onChangeText={setTitle}
-              autoFocus
-            />
+                <TextInput
+                  style={styles.input}
+                  placeholder="What milestone is this?"
+                  placeholderTextColor={colors.textTertiary}
+                  value={title}
+                  onChangeText={setTitle}
+                  autoFocus
+                />
 
-            <TextInput
-              style={[styles.input, styles.noteInput]}
-              placeholder="Add a note (optional)"
-              placeholderTextColor={colors.textTertiary}
-              value={note}
-              onChangeText={setNote}
-              multiline
-            />
+                <TextInput
+                  style={[styles.input, styles.noteInput]}
+                  placeholder="Add a note (optional)"
+                  placeholderTextColor={colors.textTertiary}
+                  value={note}
+                  onChangeText={setNote}
+                  multiline
+                />
 
-            <Pressable
-              onPress={handlePickImage}
-              style={({ pressed }) => [styles.photoButton, pressed && { opacity: 0.8 }]}
-            >
-              {photoUri ? (
-                <Image source={{ uri: photoUri }} style={styles.photoPreview} contentFit="cover" />
-              ) : (
-                <View style={styles.photoPlaceholder}>
-                  <Ionicons name="camera-outline" size={28} color={colors.textTertiary} />
-                  <Text style={styles.photoPlaceholderText}>Add Photo</Text>
-                </View>
-              )}
-            </Pressable>
+                <Pressable
+                  onPress={handlePickImage}
+                  style={({ pressed }) => [styles.photoButton, pressed && { opacity: 0.8 }]}
+                >
+                  {photoUri ? (
+                    <Image source={{ uri: photoUri }} style={styles.photoPreview} contentFit="cover" />
+                  ) : (
+                    <View style={styles.photoPlaceholder}>
+                      <Ionicons name="camera-outline" size={28} color={colors.textTertiary} />
+                      <Text style={styles.photoPlaceholderText}>Add Photo</Text>
+                    </View>
+                  )}
+                </Pressable>
 
-            <Pressable
-              onPress={handleSave}
-              style={({ pressed }) => [
-                styles.saveButton,
-                !title.trim() && styles.saveButtonDisabled,
-                pressed && { opacity: 0.9 },
-              ]}
-              disabled={!title.trim()}
-            >
-              <Text style={styles.saveButtonText}>Save Milestone</Text>
+                <Pressable
+                  onPress={handleSave}
+                  style={({ pressed }) => [
+                    styles.saveButton,
+                    !title.trim() && styles.saveButtonDisabled,
+                    pressed && { opacity: 0.9 },
+                  ]}
+                  disabled={!title.trim()}
+                >
+                  <Text style={styles.saveButtonText}>Save Milestone</Text>
+                </Pressable>
+              </KeyboardAwareScrollViewCompat>
             </Pressable>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       <Modal
@@ -271,8 +286,14 @@ const createStyles = (colors: AppThemeColors) => StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
-    paddingBottom: 40,
     paddingTop: 12,
+    maxHeight: '88%',
+  },
+  modalFormScroll: {
+    width: '100%',
+  },
+  modalFormContent: {
+    paddingBottom: 28,
   },
   modalHandle: {
     width: 36,
