@@ -5,12 +5,14 @@ import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { captureAppError, initializeMonitoring } from "@/lib/monitoring";
 import { queryClient } from "@/lib/query-client";
 import { BabyProvider } from "@/lib/BabyContext";
 import { useAppTheme } from "@/lib/use-app-theme";
 import { useFonts, Nunito_400Regular, Nunito_500Medium, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold } from "@expo-google-fonts/nunito";
 
 SplashScreen.preventAutoHideAsync();
+initializeMonitoring();
 
 function RootLayoutNav() {
   const { colors } = useAppTheme();
@@ -66,7 +68,7 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <ErrorBoundary>
+    <ErrorBoundary onError={captureAppError}>
       <QueryClientProvider client={queryClient}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <KeyboardProvider>

@@ -3,6 +3,14 @@
     "name": "SteadyDad",
     "slug": "steadydad",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/69759502-0eca-4fc8-b045-fe6b63ebe305",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "steadydad",
@@ -34,6 +42,13 @@
     },
     "android": {
       "package": "com.steadydad",
+      "blockedPermissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#F0F4F8",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -78,6 +93,14 @@
           ]
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "SteadyDad uses your photos so you can attach milestone pictures.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
       "expo-font",
       "expo-web-browser"
     ],
@@ -86,6 +109,11 @@
       "reactCompiler": true
     },
     "extra": {
+      "legal": {
+        "privacyPolicyUrl": "https://steadydad.app/privacy",
+        "supportUrl": "https://steadydad.app/support",
+        "supportEmail": "support@steadydad.app"
+      },
       "router": {
         "origin": "https://replit.com/"
       },

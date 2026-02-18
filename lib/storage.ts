@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
+import { normalizeBirthDateInput } from './helpers';
 import { BabyProfile, BabyEvent, Milestone, GuidanceItem } from './types';
 
 const KEYS = {
@@ -17,8 +18,14 @@ function generateId(): string {
 }
 
 export async function saveBabyProfile(profile: Omit<BabyProfile, 'id' | 'createdAt'>): Promise<BabyProfile> {
+  const normalizedBirthDate = normalizeBirthDateInput(profile.birthDate);
+  if (!normalizedBirthDate) {
+    throw new Error('Invalid birth date');
+  }
+
   const full: BabyProfile = {
     ...profile,
+    birthDate: normalizedBirthDate,
     id: generateId(),
     createdAt: Date.now(),
   };
@@ -34,7 +41,17 @@ export async function getBabyProfile(): Promise<BabyProfile | null> {
 export async function updateBabyProfile(updates: Partial<BabyProfile>): Promise<BabyProfile | null> {
   const existing = await getBabyProfile();
   if (!existing) return null;
-  const updated = { ...existing, ...updates };
+
+  const normalizedUpdates: Partial<BabyProfile> = { ...updates };
+  if (typeof updates.birthDate === 'string') {
+    const normalizedBirthDate = normalizeBirthDateInput(updates.birthDate);
+    if (!normalizedBirthDate) {
+      throw new Error('Invalid birth date');
+    }
+    normalizedUpdates.birthDate = normalizedBirthDate;
+  }
+
+  const updated = { ...existing, ...normalizedUpdates };
   await AsyncStorage.setItem(KEYS.BABY_PROFILE, JSON.stringify(updated));
   return updated;
 }

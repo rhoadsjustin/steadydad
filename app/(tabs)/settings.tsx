@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, TextInput, Modal, Alert, Platform,
+  View, Text, StyleSheet, ScrollView, Pressable, TextInput, Modal, Alert, Platform, Linking,
   KeyboardAvoidingView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,9 +8,12 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Haptics from 'expo-haptics';
+import Constants from 'expo-constants';
 import type { AppThemeColors } from '@/constants/colors';
+import { PRIVACY_POLICY_URL, SUPPORT_EMAIL, SUPPORT_URL } from '@/constants/legal';
 import { useBaby } from '@/lib/BabyContext';
 import { buildDashboardSnapshot } from '@/lib/dashboardSnapshot';
+import { normalizeBirthDateInput } from '@/lib/helpers';
 import { exportAllData } from '@/lib/storage';
 import { clearIOSGlanceables, isIOSGlanceablesEnabled, syncIOSGlanceables } from '@/lib/voltra';
 import { useAppTheme } from '@/lib/use-app-theme';
@@ -25,10 +28,32 @@ export default function SettingsScreen() {
   const [showEdit, setShowEdit] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
+  const appVersion = Constants.expoConfig?.version ?? '1.0.0';
+
+  const handleOpenUrl = async (url: string, errorTitle: string): Promise<boolean> => {
+    try {
+      const canOpen = await Linking.canOpenURL(url);
+      if (!canOpen) {
+        return false;
+      }
+
+      await Linking.openURL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   const handleSaveProfile = async () => {
     if (!editName.trim()) return;
-    await updateProfile({ name: editName.trim(), birthDate: editBirthDate });
+    const normalizedBirthDate = normalizeBirthDateInput(editBirthDate);
+    if (!normalizedBirthDate) {
+      Alert.alert('Invalid Birth Date', 'Use YYYY-MM-DD or MM/DD/YYYY.');
+      return;
+    }
+
+    await updateProfile({ name: editName.trim(), birthDate: normalizedBirthDate });
+    setEditBirthDate(normalizedBirthDate);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setShowEdit(false);
   };
@@ -91,6 +116,23 @@ export default function SettingsScreen() {
       console.error('Failed to sync glanceables:', err);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Sync Failed', 'Could not update iOS glanceables. Check Metro/native logs for details.');
+    }
+  };
+
+  const handleOpenPrivacyPolicy = async () => {
+    const opened = await handleOpenUrl(PRIVACY_POLICY_URL, 'Privacy Policy Unavailable');
+    if (!opened) {
+      Alert.alert('Privacy Policy Unavailable', `Could not open: ${PRIVACY_POLICY_URL}`);
+    }
+  };
+
+  const handleOpenSupport = async () => {
+    const openedSupportUrl = await handleOpenUrl(SUPPORT_URL, 'Support Link Unavailable');
+    if (openedSupportUrl) return;
+
+    const openedEmail = await handleOpenUrl(`mailto:${SUPPORT_EMAIL}`, 'Support Unavailable');
+    if (!openedEmail) {
+      Alert.alert('Support Unavailable', `Could not open support links. Email us at ${SUPPORT_EMAIL}.`);
     }
   };
 
@@ -158,10 +200,30 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Help & Legal</Text>
+          <SettingsRow
+            icon="shield-checkmark-outline"
+            label="Privacy Policy"
+            subtitle="How SteadyDad handles your data"
+            onPress={handleOpenPrivacyPolicy}
+            colors={colors}
+            styles={styles}
+          />
+          <SettingsRow
+            icon="mail-outline"
+            label="Contact Support"
+            subtitle={SUPPORT_EMAIL}
+            onPress={handleOpenSupport}
+            colors={colors}
+            styles={styles}
+          />
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>About</Text>
           <View style={styles.aboutCard}>
             <Text style={styles.aboutAppName}>SteadyDad</Text>
-            <Text style={styles.aboutVersion}>Version 1.0.0</Text>
+            <Text style={styles.aboutVersion}>Version {appVersion}</Text>
             <Text style={styles.aboutDescription}>
               Built for first-time dads. Track, learn, and thrive.
             </Text>
@@ -187,12 +249,12 @@ export default function SettingsScreen() {
                 placeholder="Enter name"
                 placeholderTextColor={colors.textTertiary}
               />
-              <Text style={styles.inputLabel}>Birth Date (YYYY-MM-DD)</Text>
+              <Text style={styles.inputLabel}>Birth Date (YYYY-MM-DD or MM/DD/YYYY)</Text>
               <TextInput
                 style={styles.input}
                 value={editBirthDate}
                 onChangeText={setEditBirthDate}
-                placeholder="2025-01-15"
+                placeholder="2026-02-17"
                 placeholderTextColor={colors.textTertiary}
                 keyboardType="numbers-and-punctuation"
               />

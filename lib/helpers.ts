@@ -1,5 +1,72 @@
 import { BabyEvent, FeedMetadata, DiaperMetadata, MoodMetadata } from './types';
 
+const MS_PER_DAY = 86400000;
+const ISO_BIRTH_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+const SLASH_BIRTH_DATE_PATTERN = /^(\d{1,2})[/-](\d{1,2})[/-](\d{2}|\d{4})$/;
+
+function toLocalDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function buildLocalDate(year: number, month: number, day: number): Date | null {
+  const candidate = new Date(year, month - 1, day);
+  if (
+    candidate.getFullYear() !== year ||
+    candidate.getMonth() !== month - 1 ||
+    candidate.getDate() !== day
+  ) {
+    return null;
+  }
+  return candidate;
+}
+
+function parseBirthDateLocal(value: string): Date | null {
+  const input = value.trim();
+  if (!input) return null;
+
+  const isoMatch = input.match(ISO_BIRTH_DATE_PATTERN);
+  if (isoMatch) {
+    const year = Number(isoMatch[1]);
+    const month = Number(isoMatch[2]);
+    const day = Number(isoMatch[3]);
+    return buildLocalDate(year, month, day);
+  }
+
+  const slashMatch = input.match(SLASH_BIRTH_DATE_PATTERN);
+  if (slashMatch) {
+    const month = Number(slashMatch[1]);
+    const day = Number(slashMatch[2]);
+    const rawYear = Number(slashMatch[3]);
+    const year = slashMatch[3].length === 2 ? 2000 + rawYear : rawYear;
+    return buildLocalDate(year, month, day);
+  }
+
+  return null;
+}
+
+function getAgeInDays(birthDate: string): number | null {
+  const parsedBirthDate = parseBirthDateLocal(birthDate);
+  if (!parsedBirthDate) return null;
+
+  const birthDay = toLocalDay(parsedBirthDate);
+  const today = toLocalDay(new Date());
+  return Math.floor((today.getTime() - birthDay.getTime()) / MS_PER_DAY);
+}
+
+export function normalizeBirthDateInput(value: string): string | null {
+  const parsed = parseBirthDateLocal(value);
+  if (!parsed) return null;
+
+  const year = parsed.getFullYear().toString();
+  const month = (parsed.getMonth() + 1).toString().padStart(2, '0');
+  const day = parsed.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function isValidBirthDateInput(value: string): boolean {
+  return normalizeBirthDateInput(value) !== null;
+}
+
 export function getRelativeTime(timestamp: number): string {
   const now = Date.now();
   const diff = now - timestamp;
@@ -15,10 +82,8 @@ export function getRelativeTime(timestamp: number): string {
 }
 
 export function getBabyAge(birthDate: string): string {
-  const birth = new Date(birthDate);
-  const now = new Date();
-  const diffMs = now.getTime() - birth.getTime();
-  const days = Math.floor(diffMs / 86400000);
+  const days = getAgeInDays(birthDate);
+  if (days === null) return 'Age unavailable';
 
   if (days < 0) return 'Not born yet';
   if (days === 0) return 'Newborn';
@@ -37,9 +102,8 @@ export function getBabyAge(birthDate: string): string {
 }
 
 export function getDayIndex(birthDate: string): number {
-  const birth = new Date(birthDate);
-  const now = new Date();
-  return Math.max(0, Math.floor((now.getTime() - birth.getTime()) / 86400000));
+  const days = getAgeInDays(birthDate);
+  return Math.max(0, days ?? 0);
 }
 
 export function getEventSummary(event: BabyEvent): string {
