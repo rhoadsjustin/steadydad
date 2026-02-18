@@ -12,7 +12,14 @@ export function initializeMonitoring(): void {
   if (isMonitoringInitialized) return;
 
   const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
-  if (!dsn) return;
+  if (!dsn) {
+    if (__DEV__) {
+      console.log(
+        '[monitoring] Sentry monitoring not initialized: EXPO_PUBLIC_SENTRY_DSN is not set.'
+      );
+    }
+    return;
+  }
 
   Sentry.init({
     dsn,
